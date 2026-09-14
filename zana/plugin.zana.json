@@ -1,0 +1,107 @@
+{
+  "$schema": "https://zana.ai/schemas/plugin.zana.v1.json",
+  "hostApi": "^0.2",
+  "main": "./main.js",
+  "activationEvents": [
+    "onView:jira",
+    "onCommand:jira.my-issues",
+    "onCommand:jira.view-issue",
+    "onCommand:jira.search",
+    "onCommand:jira.dashboard-get",
+    "onCommand:jira.widget-catalog",
+    "onCommand:jira.widget-preview",
+    "onCommand:jira.dashboard-save"
+  ],
+  "contributes": {
+    "views": [
+      { "id": "jira", "title": "Jira", "slot": "sidebar-bottom", "icon": "./icon.svg" }
+    ],
+    "commands": [
+      { "command": "jira.my-issues", "title": "My open Jira issues" },
+      {
+        "command": "jira.view-issue",
+        "title": "View Jira issue",
+        "argsSchema": {
+          "type": "object",
+          "properties": {
+            "key": { "type": "string", "description": "Issue key, e.g. TEAM-123" }
+          },
+          "required": ["key"],
+          "additionalProperties": false
+        }
+      },
+      {
+        "command": "jira.search",
+        "title": "Search Jira issues",
+        "argsSchema": {
+          "type": "object",
+          "properties": {
+            "jql": { "type": "string", "description": "JQL query", "maxLength": 1000 },
+            "limit": { "type": "number", "minimum": 1, "maximum": 100 }
+          },
+          "required": ["jql"],
+          "additionalProperties": false
+        }
+      },
+      {
+        "command": "jira.dashboard-get",
+        "title": "Get dashboards",
+        "argsSchema": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "description": "Dashboard id (omit for all)" }
+          },
+          "additionalProperties": false
+        }
+      },
+      {
+        "command": "jira.widget-catalog",
+        "title": "Widget catalog"
+      },
+      {
+        "command": "jira.widget-preview",
+        "title": "Preview widget data",
+        "argsSchema": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "description": "Widget type from the catalog" },
+            "config": { "type": "object", "description": "Widget config matching the catalog fields" }
+          },
+          "required": ["type", "config"],
+          "additionalProperties": false
+        }
+      },
+      {
+        "command": "jira.dashboard-save",
+        "title": "Save dashboards",
+        "argsSchema": {
+          "type": "object",
+          "properties": {
+            "dashboards": { "type": "array", "description": "Full dashboard list with layouts" },
+            "activeId": { "type": "string", "description": "Active dashboard id" }
+          },
+          "required": ["dashboards"],
+          "additionalProperties": false
+        }
+      }
+    ],
+    "hooks": [],
+    "actions": [],
+    "triggers": [],
+    "executors": [],
+    "settings": [
+      { "key": "jira.my-issues-jql", "type": "string", "default": "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC", "secret": false },
+      { "key": "jira.max-results", "type": "number", "default": 25, "secret": false }
+    ]
+  },
+  "permissions": {
+    "network": [],
+    "shell": false,
+    "fs": "none",
+    "zana": ["notify", "settings:own"],
+    "exec": [
+      { "command": "acli", "args": ["jira"], "allowWrite": false },
+      { "command": "acli", "args": ["auth", "status"], "allowWrite": false }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jira",
+  "version": "0.1.0",
+  "description": "Jira dashboard and read-only issue lookup via acli",
+  "license": "MIT",
+  "keywords": ["jira", "support"],
+  "extensions": {
+    "zana": "./zana/plugin.zana.json"
+  }
+}
