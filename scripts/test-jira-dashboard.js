@@ -210,6 +210,19 @@ async function main() {
   assert.equal(renamed.dashboards[0].layout.length, 1)
   assert.equal(renamed.activeId, 'd9')
 
+  // List widget Open button -> issue spotlight integration: every list row key
+  // must feed the spotlight, and view-issue must return spotlight-shaped data.
+  assert.ok(list.issues.length > 0 && list.issues.every(i => /^[A-Z][A-Z0-9]*-\d+$/.test(i.key)))
+  const openKey = list.issues[0].key
+  const viaSpotlight = await plugin.widgetData({ type: 'issue', config: { key: openKey, comments: 3 } })
+  assert.equal(viaSpotlight.key, openKey)
+  assert.ok(Array.isArray(viaSpotlight.comments))
+  const viaCommand = await zana._commands.get('jira.view-issue')({ key: openKey })
+  assert.equal(viaCommand.key, openKey)
+  assert.equal(viaCommand.description, viaSpotlight.description)
+  assert.deepEqual(viaCommand.comments, viaSpotlight.comments)
+  await assert.rejects(() => zana._commands.get('jira.view-issue')({ key: 'nope' }), /Bad issue key/)
+
   console.log('dashboard unit: all assertions passed.')
 }
 

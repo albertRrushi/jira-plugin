@@ -227,17 +227,35 @@ async function myIssues(args) {
   return searchIssues(await getJql(), limit)
 }
 
-async function viewIssue(args) {
-  const key = String((args && args.key) || '').trim().toUpperCase()
-  if (!ISSUE_KEY_RE.test(key)) throw new Error(`Bad issue key '${(args && args.key) || ''}'. Use like TEAM-123.`)
-  const parsed = await acliJson(['jira', 'workitem', 'view', key, '--json'])
+async function issueDetail(key, commentLimit) {
+  const k = String(key || '').trim().toUpperCase()
+  if (!ISSUE_KEY_RE.test(k)) throw new Error(`Bad issue key '${key || ''}'. Use like TEAM-123.`)
+  const parsed = await acliJson(['jira', 'workitem', 'view', k, '--json', '--fields', 'key,issuetype,summary,status,assignee,priority,description,created,updated,resolution,components,comment'])
   const obj = Array.isArray(parsed) ? parsed[0] : (parsed.issue || parsed.workitem || parsed)
   if (!obj) throw new Error(`Issue '${k}' not found.`)
   const base = summarize(obj)
+  const n = Math.min(10, Math.max(0, Number(commentLimit ?? 3) || 0))
+  // Comments ride along in the view response (newest last); a separate
+  // `comment list` call trips the sandbox's mutating-verb guard on the word
+  // `comment`, so it is deliberately not used here.
+  const thread = asArray((obj.fields && obj.fields.comment) || obj.comment)
+  const comments = thread.slice(-n).reverse().map(c => ({
+    author: text(c.author || c.updateAuthor),
+    created: text(c.created || c.updated),
+    body: adfText(c.body).slice(0, 500),
+  }))
   return {
     ...base,
     description: plainDescription(obj),
+    comments: n > 0 ? comments : [],
   }
+}
+
+async function viewIssue(args) {
+  // The List widget's Open button drives this command and renders the result
+  // through the issue spotlight, so this must stay shape-compatible with
+  // issueData(): full detail plus recent comments.
+  return issueDetail(args && args.key, 3)
 }
 
 async function search(args) {
@@ -353,25 +371,7 @@ async function sprintData(boardId) {
 async function issueData(key, commentLimit) {
   const k = String(key || '').trim().toUpperCase()
   if (!ISSUE_KEY_RE.test(k)) return { needsConfig: true, key: '' }
-  const parsed = await acliJson(['jira', 'workitem', 'view', k, '--json', '--fields', 'key,issuetype,summary,status,assignee,priority,description,created,updated,resolution,components,comment'])
-  const obj = Array.isArray(parsed) ? parsed[0] : (parsed.issue || parsed.workitem || parsed)
-  if (!obj) throw new Error(`Issue '${k}' not found.`)
-  const base = summarize(obj)
-  const n = Math.min(10, Math.max(0, Number(commentLimit ?? 3) || 0))
-  // Comments ride along in the view response (newest last); a separate
-  // `comment list` call trips the sandbox's mutating-verb guard on the word
-  // `comment`, so it is deliberately not used here.
-  const thread = asArray((obj.fields && obj.fields.comment) || obj.comment)
-  const comments = thread.slice(-n).reverse().map(c => ({
-    author: text(c.author || c.updateAuthor),
-    created: text(c.created || c.updated),
-    body: adfText(c.body).slice(0, 500),
-  }))
-  return {
-    ...base,
-    description: plainDescription(obj),
-    comments: n > 0 ? comments : [],
-  }
+  return issueDetail(k, commentLimit)
 }
 
 function stripOrderBy(jql) {
