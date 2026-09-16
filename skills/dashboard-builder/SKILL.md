@@ -13,7 +13,7 @@ You drive the Jira dashboard through four plugin commands (MCP `zana_run_plugin_
 1. **Catalog first**: `jira.widget-catalog` → widget types, their config fields, templates, grid rules (12 columns; widget `{ id, type, title, x, y, w, h, config }`; max 10 dashboards, 24 widgets each).
 2. **Read current**: `jira.dashboard-get` (or `{ id }` for one) → existing dashboards, active tab, layouts.
 3. **Preview before placing**: `jira.widget-preview { type, config }` → confirms the widget returns data. Never place an unverified widget.
-4. **Save whole**: `jira.dashboard-save { dashboards, activeId }` → full replacement of the dashboard list. Always base edits on a fresh `dashboard-get`; never invent ids (new ids: short readable slugs like `d_review`).
+4. **Save whole**: `jira.dashboard-save { dashboards, activeId }` → full replacement of the dashboard list. Always base edits on a fresh `dashboard-get`; never invent ids (new ids: short readable slugs like `d_review`). To rename a dashboard, keep its `id` and `layout` and change only `name`.
 
 ## Widget types
 

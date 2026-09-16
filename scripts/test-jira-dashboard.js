@@ -200,6 +200,16 @@ async function main() {
   assert.equal(one.dashboards[0].layout.length, 1)
   await assert.rejects(() => zana._commands.get('jira.dashboard-get')({ id: 'missing' }), /not found/)
 
+  // Rename flow: same id + layout, new name only — creation flow untouched.
+  await zana._commands.get('jira.dashboard-save')({
+    activeId: 'd9',
+    dashboards: [{ id: 'd9', name: 'Renamed board', layout: [{ id: 'w1', type: 'count', title: 'C', x: 0, y: 0, w: 4, h: 2, config: { jql: 'x', label: 'L' } }] }],
+  })
+  const renamed = await zana._commands.get('jira.dashboard-get')({ id: 'd9' })
+  assert.equal(renamed.dashboards[0].name, 'Renamed board')
+  assert.equal(renamed.dashboards[0].layout.length, 1)
+  assert.equal(renamed.activeId, 'd9')
+
   console.log('dashboard unit: all assertions passed.')
 }
 
